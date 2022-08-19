@@ -8,7 +8,6 @@ from utils.formatter import Formatter
 
 from lang_data import get_filter_list_by_lang
 
-
 class QuestSpider(scrapy.Spider):
     name = "quest_scraper"
     start_urls = []
@@ -19,8 +18,8 @@ class QuestSpider(scrapy.Spider):
     def __init__(self, lang="en", **kwargs):
         super().__init__(**kwargs)
         self.lang = lang
-        self.start_urls = [self.base_url.format(lang, qid) for qid in QUEST_IDS]
-        # self.start_urls = [self.base_url.format(lang, qid) for qid in [6584, 2479, 849]]
+        #self.start_urls = [self.base_url.format(lang, qid) for qid in QUEST_IDS]
+        self.start_urls = [self.base_url.format(lang, qid) for qid in [6584, 2479, 849]]
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -111,13 +110,14 @@ class QuestSpider(scrapy.Spider):
         return text
 
     def spider_closed(self, spider):
-        self.logger.info("Spider closed. Starting formatter...")
+        #self.logger.info("Spider closed. Starting formatter...")
 
-        f = Formatter()
-        f(self.lang, "npc")
-        f(self.lang, "quest")
+        #f = Formatter()
+        #f(self.lang, "quest")
 
-        self.logger.info("Formatting done!")
-        m = Merger(self.lang)
-        m()
-        self.logger.info("Merging done. New lookup file at '{}'".format(m.lang_dir))
+        #self.logger.info("Formatting done!")
+        #m = Merger(self.lang)
+        #m()
+        #self.logger.info("Merging done. New lookup file at '{}'".format(m.lang_dir))
+
+        return

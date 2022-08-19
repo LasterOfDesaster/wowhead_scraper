@@ -5,8 +5,9 @@ from typing import Union
 
 from scrapy.crawler import CrawlerProcess
 
-from spiders import NPCSpider, ObjectSpider, QuestSpider
+from spiders import NPCSpider, ObjectSpider, QuestSpider, GemSpider, ConsumesSpider, SkillSpider
 from utils.paths import OUTPUT_DIR
+import os
 
 
 class Runner:
@@ -21,7 +22,8 @@ class Runner:
         self.lang_dir = OUTPUT_DIR / lang
         if not self.lang_dir.exists():
             self.lang_dir.mkdir()
-        self.lang_dir = self.lang_dir.relative_to(Path(__file__).parent)
+        #self.lang_dir = self.lang_dir.relative_to(Path(__file__).parent)
+        self.lang_dir = self.lang_dir.relative_to(os.path.dirname(os.path.realpath(__file__)))
 
     def run(self) -> None:
         feed_uri = self.__build_feed_uri()
@@ -48,6 +50,12 @@ class Runner:
             process.crawl(ObjectSpider, lang=self.lang)
         elif self.target == "quest":
             process.crawl(QuestSpider, lang=self.lang)
+        elif self.target == "gem":
+            process.crawl(GemSpider, lang=self.lang)
+        elif self.target == "cons":
+            process.crawl(ConsumesSpider, lang=self.lang)
+        elif self.target == "skill":
+            process.crawl(SkillSpider, lang=self.lang)            
 
         process.start()
 
@@ -58,6 +66,12 @@ class Runner:
             feed_uri = self.lang_dir / "object_data.json"
         elif self.target == "quest":
             feed_uri = self.lang_dir / "quest_data.json"
+        elif self.target == "gem":
+            feed_uri = self.lang_dir / "gem_data.json"
+        elif self.target == "cons":
+            feed_uri = self.lang_dir / "cons_data.json"    
+        elif self.target == "skill":
+            feed_uri = self.lang_dir / "skill_data.json"                        
         else:
             self.logger.error("Unknown target '{}'".format(self.target))
             return None
@@ -73,9 +87,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.lang is None:
-        args.lang = "en"
+        args.lang = "de"
     if args.target is None:
-        args.target = "npc"
+        args.target = "cons"
 
     runner = Runner(args.lang, args.target)
     runner.run()
