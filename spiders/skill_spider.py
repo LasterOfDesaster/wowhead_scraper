@@ -77,23 +77,32 @@ class SkillSpider(scrapy.Spider):
     def __parse_html(self, response) -> str:
         xpath: str = '//body/div[3]/div[1]/div[1]/div[2]/div[3]/script[contains(text(),\'WH.Gatherer.addData(6, 8, {auf}\')]/text()'.format(auf="{")
 
+        # extract <script> tag content from raw HTML
         js: str = response.xpath(xpath).get()
+        # replace junk with empty-string
         js = js.replace("\n", "")
         js = js.replace("//<![CDATA[", "").replace("//]]", "")
         js = js.replace("var lv_comments3 = [];", "")
+         # since <script> tag can contain multiple occurences of valid js split them by the delimiter ';'
         js_lines = js.split(";")
-        js = ""
 
+        # sometimes the <script> tag can contain multiple lines of JS, to find the line for further processing loop over the
+        # each line and check if it contains 'WH.Gatherer.addData(6, 8,'
+        js = ""
         for js_line in js_lines:
             if "WH.Gatherer.addData(6, 8," in js_line:
                 js = js_line
                 break
         json_text = js[26:len(js)-1]
 
+	    # try converting the parameter 3 from string to json
+	    # in case anything fails return "fail values" but don't brick the programm
         result: str = ""
         try:
             json_object = json.loads(json_text)
 
+            # concat spell id and the content of data into the result string. this causes the output jsonfile to contain CSV data
+            # that can be processed later in the Formatter 
             for spellID, data in json_object.items():
                 result = result + spellID + ";"
         except:
@@ -105,6 +114,8 @@ class SkillSpider(scrapy.Spider):
     def spider_closed(self, spider):
         self.logger.info("Spider closed. Starting formatter...")
 
+        # since webscraping hundreds of data each time the processes are mostly manually done
+        # therefore the Formatter is called by hand and not executed in sequence after the Spider is done
         f = Formatter()
         #f(self.lang, "cons")
 
