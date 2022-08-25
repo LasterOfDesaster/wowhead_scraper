@@ -116,29 +116,29 @@ class GemSpider(scrapy.Spider):
         gemid:str = response.url.split("/")[-2][5:]
         xpath: str = '//body/div[3]/div[1]/div[1]/div[2]/div[3]/script[contains(text(),\'WH.Gatherer.addData(3, 8, {auf}\"{gem_id}\":\')]/text()'.format(gem_id=gemid, auf="{")
 
-	# extract <script> tag from the raw HTML
+	    # extract <script> tag from the raw HTML
         js: str = response.xpath(xpath).get()
-	# replace \n with empty-string
+	    # replace \n with empty-string
         js = js.replace("\n", "")
-	# replace junk with empty-string
+	    # replace junk with empty-string
         js = js.replace("//<![CDATA[", "")
         js = js.replace("var lv_comments3 = [];", "")
-	# since <script> tag can contain multiple occurences of valid js split them by the delimiter ';'
+	    # since <script> tag can contain multiple occurences of valid js split them by the delimiter ';'
         js = js[:js.find(";")]
-	# line: WH.Gatherer.addData(X, Y, {});
-	# since the line starts with a function call the  line also ends with a closing bracket + a semicolon
+	    # line: WH.Gatherer.addData(X, Y, {});
+	    # since the line starts with a function call the  line also ends with a closing bracket + a semicolon
         json_text = js[26:len(js)-1]
 
-	# try converting the parameter 3 from string to json
-	# in case anything fails return "fail values" but don't brick the programm
+	    # try converting the parameter 3 from string to json
+	    # in case anything fails return "fail values" but don't brick the programm
         try:
             json_object = json.loads(json_text)
 
             gem_icon = json_object[gemid]['icon']
             gem_quality = json_object[gemid]['quality']
 
-	    # check if gem_icon is in list of valid icons. so if the current icon is a uncut gem then use the original icon
-	    # this way the raw gems can be filterd out later
+            # check if gem_icon is in list of valid icons. so if the current icon is a uncut gem then use the original icon
+            # this way the raw gems can be filterd out later
             if gem_icon in self.gem_color:
                 color = self.gem_color[gem_icon][:1]
             else:
