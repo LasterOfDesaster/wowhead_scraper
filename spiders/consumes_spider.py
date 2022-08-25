@@ -2,6 +2,10 @@ import scrapy
 from scrapy import signals
 from scrapy.shell import inspect_response
 
+# this list of consumes ids is exported from wow.tools -> view table -> items -> export csv -> filter for classID == 0 (consumes)
+# classID 0 is for all consumes, subClassId differentiates between Pots, Flask, Food&Drink, Xplosives, ...
+# List of all consumes is ~2k+ so I filtered for SubClassID 0-7 separatly and made an export for each and then running a Formatter
+# + renaming output_consumes.csv to output_cons_X_DESC.csv (X = SubClassID, DESC = short description). 
 #from ids import CONS_IDS
 from utils import Merger
 from utils.formatter import Formatter
@@ -18,6 +22,8 @@ class ConsumesSpider(scrapy.Spider):
     item_quality = {
 
     }  
+    # CONS_IDS is normally from \ids\cons_ids.py but some consumes made problems when parsing HTML so the following list is just the 
+    # previous not working subset of the consumes list
     CONS_IDS = [
         6657, 
         7676, 
@@ -139,22 +145,30 @@ class ConsumesSpider(scrapy.Spider):
         itemid:str = response.url.split("/")[-2][5:]
         xpath: str = '//body/div[3]/div[1]/div[1]/div[2]/div[3]/script[contains(text(),\'WH.Gatherer.addData(3, 8, {auf}\"{item_id}\":\')]/text()'.format(item_id=itemid, auf="{")
 
+        # extract <script> tag from raw HTML
         js: str = response.xpath(xpath).get()
+        # replace junk with empty-string
         js = js.replace("\n", "")
         js = js.replace("//<![CDATA[", "")
         js = js.replace("var lv_comments3 = [];", "")
+        # since <script> tag can contain multiple occurences of valid js split them by the delimiter ';'
         js_lines = js.split(";")
-        js = ""
 
+        # sometimes the <script> tag can contain multiple lines of JS, to find the line for further processing loop over the
+        # each line and check if it contains 'WH.Gatherer.addData(3, 8,'        
+        js = ""
         for js_line in js_lines:
             if "WH.Gatherer.addData(3, 8," in js_line:
                 js = js_line
                 break
         json_text = js[26:len(js)-1]
 
+	    # try converting the parameter 3 from string to json
+	    # in case anything fails return "fail values" but don't brick the programm
         try:
             json_object = json.loads(json_text)
 
+            # check  if itemid is contained in json_object, if not then use fallback value
             if itemid not in json_object:
                 result = "fail"
             else:
@@ -168,6 +182,8 @@ class ConsumesSpider(scrapy.Spider):
     def spider_closed(self, spider):
         self.logger.info("Spider closed. Starting formatter...")
 
+        # since webscraping hundreds of data each time the processes are mostly manually done
+        # therefore the Formatter is called by hand and not executed in sequence after the Spider is done
         f = Formatter()
         #f(self.lang, "cons")
 

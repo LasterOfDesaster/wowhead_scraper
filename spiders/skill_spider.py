@@ -83,7 +83,7 @@ class SkillSpider(scrapy.Spider):
         js = js.replace("\n", "")
         js = js.replace("//<![CDATA[", "").replace("//]]", "")
         js = js.replace("var lv_comments3 = [];", "")
-         # since <script> tag can contain multiple occurences of valid js split them by the delimiter ';'
+        # since <script> tag can contain multiple occurences of valid js split them by the delimiter ';'
         js_lines = js.split(";")
 
         # sometimes the <script> tag can contain multiple lines of JS, to find the line for further processing loop over the
